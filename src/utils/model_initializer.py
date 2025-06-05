@@ -2,13 +2,14 @@
 
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
-from typing import Literal
+from typing import Literal, Callable, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tavily import TavilyClient , AsyncTavilyClient
 from exa_py import Exa , AsyncExa
 from src.utils.settings import settings,get_api_key
 
 
+# Openai LLM
 def get_openai_llm(model_num: Literal[1,2] = 1 , temperature: int = 0.5):
     """
     It contains multiple openai models under usage and can switch between 
@@ -29,7 +30,9 @@ def get_openai_llm(model_num: Literal[1,2] = 1 , temperature: int = 0.5):
         2: "o4-mini-2025-04-16" }
     
     # Let's get openai api key for llm
-    openai_api_key = get_api_key(settings.OPENAI_API_KEY)
+    openai_api_key: str | None = get_api_key(settings.OPENAI_API_KEY)
+    if openai_api_key is None:
+        return "Openai api key is not found"
     
     openai_model = model_list[model_num]
 
@@ -43,6 +46,8 @@ def get_openai_llm(model_num: Literal[1,2] = 1 , temperature: int = 0.5):
         )
     return openai_llm
 
+
+# Gemini LLM
 def get_gemini_llm(model_num: Literal[1,2,3,4] = 1, temperature: int = 0.5):
     """
     It contains multiple gemini models that can be used in our project. To choose between different models 
@@ -60,7 +65,10 @@ def get_gemini_llm(model_num: Literal[1,2,3,4] = 1, temperature: int = 0.5):
     """
     
     # lets get gemini api key 
-    gemini_api_key = get_api_key(settings.GEMINI_API_KEY)
+    gemini_api_key: str | None = get_api_key(settings.GEMINI_API_KEY)
+    if gemini_api_key is None:
+        return "Gemini api key is not found"
+
 
     gemini_models_list = {
         1:"gemini-2.0-flash", 
@@ -83,6 +91,7 @@ def get_gemini_llm(model_num: Literal[1,2,3,4] = 1, temperature: int = 0.5):
     return gemini_llm
 
 
+# Groq LLM
 def get_groq_llm(model_num: Literal[1,2,3], temperature: int = 0.5) -> ChatGroq:
     """
     This function initializes the Groq llm that will be called in the nodes. 
@@ -101,7 +110,9 @@ def get_groq_llm(model_num: Literal[1,2,3], temperature: int = 0.5) -> ChatGroq:
     """
 
     # Lets get the Groq API
-    GROQ_API = get_api_key(settings.GROQ_API_KEY)
+    GROQ_API: str | None = get_api_key(settings.GROQ_API_KEY)
+    if GROQ_API is None:
+        return "GROQ API is not found"
 
     # Lets define the dictionary that contains the Groq models we can use.
     Groq_model_list = {
@@ -122,7 +133,7 @@ def get_groq_llm(model_num: Literal[1,2,3], temperature: int = 0.5) -> ChatGroq:
     return groq_llm
 
 
-
+# Tavily web search client
 def tavily_client_setup(asyncronous_tavily: bool = False) -> TavilyClient | AsyncTavilyClient:
     """
     Function returns the Tavily client. It can return both Syncronous and Asyncronous client
@@ -135,7 +146,9 @@ def tavily_client_setup(asyncronous_tavily: bool = False) -> TavilyClient | Asyn
     TavilyClient or AsyncTavilyClient
     """
 
-    TAVILY_API = get_api_key(settings.TAVILY_API_KEY)
+    TAVILY_API: str | None = get_api_key(settings.TAVILY_API_KEY)
+    if TAVILY_API is None:
+        return 'Tavily API is not found'
 
     if asyncronous_tavily:
         return AsyncTavilyClient(api_key= TAVILY_API)
@@ -143,6 +156,7 @@ def tavily_client_setup(asyncronous_tavily: bool = False) -> TavilyClient | Asyn
         return TavilyClient(api_key=TAVILY_API)
     
 
+# Exa web search Client 
 def Exa_client_setup(asyncronous_exa: bool = False) -> Exa | AsyncExa:
     """
     Function returns the Exa client. It can return both Syncronous and Asyncronous client
@@ -155,21 +169,46 @@ def Exa_client_setup(asyncronous_exa: bool = False) -> Exa | AsyncExa:
     Exa or AsyncExa
     """
     
-    Exa_API = get_api_key(settings.EXA_API_KEY)
+    Exa_API: str | None = get_api_key(settings.EXA_API_KEY)
+    if Exa_API is None:
+        return "Exa API is not found"
 
     if asyncronous_exa:
-        return AsyncExa
+        return AsyncExa(Exa_API)
     else:
-        return Exa
+        return Exa(Exa_API)
     
 
+# Function that will be used to invoke models with fallbacks
 
+"""
+    invoking single model:
+    response: Structured_output = llm1.invoke(message)
+    invoking model with fallback:
+    response: Strcutured_output = llm1.with_fallbacks([llm2])
 
+    llm1 & llm2 --> These are the chat-Model defined with parameters. 
+
+    # What do we want to implement?
+    Initializes a primary model with optional structured output and tool binding,
+    and sets up fallback models with the same options.
+
+    **llm with fallback that gives structured output - tools binded**
+    Example to define llm binded with tools to give structured output:
+    llm_t = llm.bind_tools([t1, t2])
+    llm_t_structured = llm_t.with_structured_output(MySchema)  --> This structures the output of LLM, not the tool's output.
+
+    What if we want to get output of tool in structured form?
+    We need to define it in the tool-function so, that when tool gets executed function returns tool output in the 
+    structured form. 
+
+"""
+
+def INITIALIZE_MODEL_WITH_FALLBACKS_STRUCTURED_OUTPUT(
+        PRIMARY_MODEL_FN: Callable[..., Any],
+        FALLBACK_MODEL_FN: Callable[...,Any],
+        TOOLS: Callable[...,Any]
+
+                                                ):
     
-
-    
-
-
-
-
     
