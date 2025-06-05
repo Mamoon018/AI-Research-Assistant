@@ -39,9 +39,9 @@ class input_params_websearch(BaseModel):
     )
 
 class web_search(BaseTool):
-    name = 'web search tool'
-    description = 'Web searcht tool for performing search using Tavily with fallback to Exa on error'
-    args_schema = input_params_websearch
+    name: str = 'web search tool'
+    description: str = 'Web searcht tool for performing search using Tavily with fallback to Exa on error'
+    args_schema: str = input_params_websearch
 
     def params_tavily_Exa(self):
 
@@ -62,13 +62,19 @@ class web_search(BaseTool):
         Exa_client = Exa_client_setup()
         
         try:
-            results = Tavily_client.search(parsed_input.model_dump())
+            results = Tavily_client.search(**parsed_input.model_dump())
             return results
         except Exception as e:
             try:
-                results = Exa_client.search_and_contents(parsed_input.model_dump()) # need to pass exa parameters separately as they are different from tavily
+                results = Exa_client.search_and_contents(**parsed_input.model_dump()) # need to pass exa parameters separately as they are different from tavily
 
                 return results
             except Exception as e:
 
                 return f'error occured {e}'
+            
+if __name__ == "__main__":
+    tool = web_search()
+    response = tool._run()  
+    print(response)
+

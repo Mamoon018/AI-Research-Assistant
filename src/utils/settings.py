@@ -33,7 +33,7 @@ class settings(BaseSettings):
     
     """
     # We will define app_config to read .env according to given parameters.
-    app_config = SettingsConfigDict(
+    model_config = SettingsConfigDict(
         env_file= find_dotenv(),
         env_file_encoding="utf-8",
         env_ignore_empty=True,

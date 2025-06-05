@@ -203,12 +203,3 @@ def Exa_client_setup(asyncronous_exa: bool = False) -> Exa | AsyncExa:
     structured form. 
 
 """
-
-def INITIALIZE_MODEL_WITH_FALLBACKS_STRUCTURED_OUTPUT(
-        PRIMARY_MODEL_FN: Callable[..., Any],
-        FALLBACK_MODEL_FN: Callable[...,Any],
-        TOOLS: Callable[...,Any]
-
-                                                ):
-    
-    
