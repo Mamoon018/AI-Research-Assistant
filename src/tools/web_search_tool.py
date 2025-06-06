@@ -44,6 +44,10 @@ class web_search(BaseTool):
     args_schema: str = input_params_websearch
 
     def params_tavily_Exa(self):
+        """
+        It defines the paramters for Tavily & Exa. We can extract and pass the relevant parameters from the 
+        list and pass it to the respectiv search tool.
+        """
 
         params = {
                 'query': 'When did Pakistan come into existence?',
