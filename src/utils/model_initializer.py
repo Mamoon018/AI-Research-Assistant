@@ -6,6 +6,7 @@ from typing import Literal, Callable, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
 from tavily import TavilyClient , AsyncTavilyClient
 from exa_py import Exa , AsyncExa
+from supabase import create_client, create_async_client
 from src.utils.settings import settings,get_api_key
 
 
@@ -163,7 +164,7 @@ def Exa_client_setup(asyncronous_exa: bool = False) -> Exa | AsyncExa:
 
     **Args:**
     asyncronous_exa (bool): It is set to False by default means we will get syncronous client & if passes True 
-                                it will return Asyncronous client.
+    it will return Asyncronous client.
     
     **Returns:**
     Exa or AsyncExa
@@ -178,6 +179,46 @@ def Exa_client_setup(asyncronous_exa: bool = False) -> Exa | AsyncExa:
     else:
         return Exa(Exa_API)
     
+
+# Lets define Supabase client 
+def supabase_client(asyncronous_supabase: bool = False):
+    """
+    The function returns the supabase client that will be used in Supabasevectorstore parameters.
+
+    **Args:**
+    asyncronous_supabase (bool): It is set to False by default means we will get syncronous client & if passes True 
+    it will return Asyncronous client.
+
+    **Returns:**
+    create_client or create_async_client
+    """ 
+
+    # Lets setup the Supabase and OpenAI 
+    SUPABASE_URL: str | None = get_api_key(settings.SUPABASE_PROJECT_URL)
+    if SUPABASE_URL is None:
+        return 'SUPABASE URL not found!'
+
+    SUPABASE_APIKEY: str | None = get_api_key(settings.SUPABASE_API_KEY)
+    if SUPABASE_APIKEY is None:
+        return 'SUPABASE API is not found!'
+    
+    try:
+        if asyncronous_supabase:
+            async_supabase_client = create_async_client(supabase_url=SUPABASE_URL, supabase_key= SUPABASE_APIKEY)
+            return async_supabase_client
+        else:
+            sync_supabase_client = create_client(supabase_url=SUPABASE_URL, supabase_key= SUPABASE_APIKEY)
+            return sync_supabase_client
+    except Exception as e:
+        raise RuntimeError('supabaseclient could not be created ')
+
+
+
+
+
+
+
+
 
 # Function that will be used to invoke models with fallbacks
 
