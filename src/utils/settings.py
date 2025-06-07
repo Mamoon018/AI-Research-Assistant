@@ -55,6 +55,9 @@ class settings(BaseSettings):
     OPIK_PROJECT_NAME: SecretStr | None = None
     OPIK_API_KEY: SecretStr | None = None 
 
+    # Supabase project
+    SUPABASE_PROJECT_URL: SecretStr | None = None 
+    SUPABASE_API_KEY: SecretStr | None = None 
 
 # instantiate the class -- we can use this instance to get any API.
 settings = settings()

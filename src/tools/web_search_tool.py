@@ -6,7 +6,6 @@ from langchain.callbacks import StdOutCallbackHandler
 from pydantic import BaseModel, Field
 from typing import Any, Literal, Optional
 
-
 """
 1- Firstly, we will define Class BaseModel to define data types of input parameters.
 2- Within the class, using tool decorator we will define _run & _arun functions incorporating both Tavily & Exa. 
@@ -81,4 +80,5 @@ if __name__ == "__main__":
     tool = web_search()
     response = tool._run()  
     print(response)
+
 

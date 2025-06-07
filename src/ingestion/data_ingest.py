@@ -24,10 +24,12 @@ async def PDF_parser(file_path: Any) -> list[Any]:
 
     async for page in loader.alazy_load():
         pages.append(page)
-        document_page_content = [ {'meta_data' : doc.metadata} for doc in pages]
-    return document_page_content
+        return pages
+        #document_page_content = [ {'meta_data' : doc.metadata} for doc in pages]
+    #return document_page_content
 
 if __name__ == '__main__':
     file_address = 'src/ingestion/LangGraph.pdf'
     results = asyncio.run(PDF_parser(file_path=file_address))
     print(results)
+
