@@ -30,14 +30,14 @@ async def vector_embeddings(doc_objects):
          raise RuntimeError(f'Vectorembeddings could not store because of error {e}') from e   
     
     # we can use the as_retriever() to extract from DB.
-    print('embedding stored')
+    #print('embedding stored')
     
 
-async def main():
-    file_address = 'src/ingestion/LangGraph.pdf'
-    list_doc_objs = await PDF_parser(file_path=file_address)
+#async def main():
+#    file_address = 'src/ingestion/LangGraph.pdf'
+#    list_doc_objs = await PDF_parser(file_path=file_address)
 
-    await vector_embeddings(doc_objects=list_doc_objs)
+#    await vector_embeddings(doc_objects=list_doc_objs)
 
-if __name__ == '__main__':
-    asyncio.run(main()) 
+#if __name__ == '__main__':
+#    asyncio.run(main()) 
