@@ -76,9 +76,9 @@ class web_search(BaseTool):
 
                 return f'error occured {e}'
             
-if __name__ == "__main__":
-    tool = web_search()
-    response = tool._run()  
-    print(response)
+#if __name__ == "__main__":
+#    tool = web_search()
+#    response = tool._run()  
+#    print(response)
 
 
