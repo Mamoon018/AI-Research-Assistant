@@ -4,6 +4,8 @@ from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from typing import Literal, Callable, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.tools import tool
+from langchain_core.output_parsers import with_structured_output
 from tavily import TavilyClient , AsyncTavilyClient
 from exa_py import Exa , AsyncExa
 from supabase import create_client, create_async_client
@@ -213,34 +215,63 @@ def supabase_client(asyncronous_supabase: bool = False):
         raise RuntimeError('supabaseclient could not be created ')
 
 
-
-
-
-
-
-
-
 # Function that will be used to invoke models with fallbacks
 
 """
     invoking single model:
     response: Structured_output = llm1.invoke(message)
     invoking model with fallback:
-    response: Strcutured_output = llm1.with_fallbacks([llm2])
-
+    response: Strcutured_output = llm1.with_fallbacks([llm2]).invoke()
     llm1 & llm2 --> These are the chat-Model defined with parameters. 
 
-    # What do we want to implement?
-    Initializes a primary model with optional structured output and tool binding,
-    and sets up fallback models with the same options.
+    # What is the purpose of the funtion?
+    1) To create a function that takes the defined-llms along with some related parameters, and bind tools 
+    to them. And then generate a structured response. 
+    2) create one for primary_model & one for fallback_model.
 
     **llm with fallback that gives structured output - tools binded**
-    Example to define llm binded with tools to give structured output:
-    llm_t = llm.bind_tools([t1, t2])
+    Example to define llm binded with tools to give structured output: 
+    llm_t = llm.bind_tools([t1, t2]) 
     llm_t_structured = llm_t.with_structured_output(MySchema)  --> This structures the output of LLM, not the tool's output.
 
     What if we want to get output of tool in structured form?
-    We need to define it in the tool-function so, that when tool gets executed function returns tool output in the 
+    We need to define that in the tool-function so, that when tool gets executed function returns tool output in the 
     structured form. 
 
 """
+
+def INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
+        model_fn: Callable[...,Any],
+        model_fn_kwargs: dict,
+        fallback_model_fn: Callable[...,Any],
+        fallback_fn_kwargs: list[dict],
+        bind_tool_list: list[Any],
+        structured_output: Callable[...,Any]
+                                                ):
+    
+    """
+    1) Takes the defined-llmchatmodels along with some related parameters, and bind tools 
+    to them. And then generate a structured response.
+    2) Create one for primary_model & one for fallback_model.    
+    
+    """
+
+    primary_llm_fn = model_fn(**model_fn_kwargs)
+
+    # lets bind tools to llm function
+    llm_fn_bind_tools = primary_llm_fn.bind_tools(bind_tool_list)
+
+    # lets get the final output of the llm_fn_bind_tools in structured form
+    llm_fn_bind_tools_struc_output = llm_fn_bind_tools.with_strcutured_output(structured_output)
+
+    # lets get the fallbackmodel
+    models, params = fallback_fn_kwargs
+    fallback_llm_fn = fallback_model_fn(**models, **params)
+
+    # bind the tools to fallbackmodel
+    fallback_llm_fn_bind_tools = fallback_llm_fn.bind_tools(bind_tool_list)
+
+    # structure the final output 
+    fallback_llm_fn_bind_tools_struc_output = fallback_llm_fn_bind_tools.with_structured_output(structured_output)
+
+    
