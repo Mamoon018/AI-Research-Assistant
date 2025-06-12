@@ -5,10 +5,9 @@ from langchain_groq import ChatGroq
 from typing import Literal, Callable, Any
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
-from langchain_core.output_parsers import with_structured_output
 from tavily import TavilyClient , AsyncTavilyClient
 from exa_py import Exa , AsyncExa
-from supabase import create_client, create_async_client
+from supabase import create_client, acreate_client, AsyncClient
 from src.utils.settings import settings,get_api_key
 
 
@@ -206,13 +205,13 @@ def supabase_client(asyncronous_supabase: bool = False):
     
     try:
         if asyncronous_supabase:
-            async_supabase_client = create_async_client(supabase_url=SUPABASE_URL, supabase_key= SUPABASE_APIKEY)
+            async_supabase_client: AsyncClient = acreate_client(supabase_url=SUPABASE_URL, supabase_key= SUPABASE_APIKEY)
             return async_supabase_client
         else:
             sync_supabase_client = create_client(supabase_url=SUPABASE_URL, supabase_key= SUPABASE_APIKEY)
             return sync_supabase_client
     except Exception as e:
-        raise RuntimeError('supabaseclient could not be created ')
+        raise ConnectionError('supabaseclient could not be created ')
 
 
 # Function that will be used to invoke models with fallbacks

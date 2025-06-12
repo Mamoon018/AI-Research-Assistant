@@ -14,9 +14,9 @@ from typing import Any
 
 class database_queries():
     openai_embeddings = OpenAIEmbeddings()
-    supabase_client_activated = supabase_client()
+    supabase_client_activated = supabase_client(asyncronous_supabase=True)
     vector_store = None
-    documents: list[Any]
+    documents: list[Any] = None
     no_of_doc_to_retrieve: int = 4
 
 
@@ -25,24 +25,24 @@ class database_queries():
             if self.documents:  # If file was uploaded and questions are asked about it. Then we will initialize the vectorstore to store the embeddings in Supabase database.
 
                 # Let's store the chunks in DB
-                self.vector_store = await SupabaseVectorStore.from_documents(
+                self.vector_store = SupabaseVectorStore.from_documents(
                     documents= self.documents,
                     embedding= self.openai_embeddings,
-                    client = self.supabase_client_activated,
+                    client = await self.supabase_client_activated,
                     table_name = 'documents'
                     
                 )
             
             elif not self.vector_store:      # When file was not provided and we will want to check if question has some information in DB or not. (Here we are ensuring that previously stored data is not stored again)
 
-                self.vector_store = await SupabaseVectorStore(
+                self.vector_store = SupabaseVectorStore(
                     embedding= self.openai_embeddings,
-                    client = self.supabase_client_activated,
+                    client = await self.supabase_client_activated,
                     table_name = 'documents'
                 )
 
         except Exception as e:
-            raise RuntimeError(f'Vectorembeddings could not store because of error {e}') from e   
+            raise RuntimeError(f'could not initialize the vectorstore due to runtime error {e}') from e   
 
 
     # Lets create a function for data retrieval 
@@ -94,8 +94,8 @@ class database_queries():
             await self.initialize_vector_store()
 
             # lets retrieve the data using get_relevant_documents search
-            retriever = await self.vector_store.as_retriever()
-            retrieved_data = retriever.get_relevant_documents(user_query, self.no_of_doc_to_retrieve)
+            retriever = self.vector_store.as_retriever(search_kwargs={"k": self.no_of_doc_to_retrieve})
+            retrieved_data = await retriever.get_relevant_documents(user_query)
 
             return retrieved_data
 
@@ -103,28 +103,22 @@ class database_queries():
             raise RuntimeError(f'data could not retrieved due to error {e}') from e
 
 
-#async def main():
+async def main():
 
-#    db = database_queries()
+    db = database_queries()
         
         # Example: Store documents
-#    file_address = 'src/ingestion/LangGraph.pdf'
+    file_address = 'src/ingestion/LangGraph.pdf'
 
-#    doc_objects = await PDF_parser(file_path=file_address) # Your document objects
-#    await db.vector_embeddings(doc_objects)
+    #doc_objects = await PDF_parser(file_path=file_address) # Your document objects
+    #await db.vector_embeddings_storage()
         
         # Example: Retrieve data
-#    results = await db.data_retrieval("What is AI?")
-#    print(results)
+    results = await db.vector_data_retrieval("What is AI?")
+    print(results)
 
-#if __name__ == "__main__":
-#   asyncio.run(main())
-            
-        
-
-
-
-
+if __name__ == "__main__":
+   asyncio.run(main())
 
 
 
