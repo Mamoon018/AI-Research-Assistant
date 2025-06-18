@@ -123,22 +123,22 @@ class database_queries():
             raise RuntimeError(f'data could not retrieved due to error {e}') from e
 
 
-async def main():
+#async def main():
 
-    db = database_queries()
-    await db.async_init()
+#    db = database_queries()
+#    await db.async_init()
         
         # Example: Store documents
-    file_address = 'src/ingestion/LangGraph.pdf'
+#    file_address = 'src/ingestion/LangGraph.pdf'
 
     #doc_objects = await PDF_parser(file_path=file_address) # Your document objects
     #await db.vector_embeddings_storage()
         
         # Example: Retrieve data
-    results = await db.vector_data_retrieval("What are spellings of AI?")
-    print(results)
+#    results = await db.vector_data_retrieval("What are spellings of AI?")
+#    print(results)
 
-if __name__ == "__main__":
-   asyncio.run(main())
+#if __name__ == "__main__":
+#   asyncio.run(main())
 
 
