@@ -3,9 +3,10 @@
 import asyncio
 from langchain_community.document_loaders import PyPDFLoader
 from typing import Any 
+from pathlib import Path 
 
 
-async def PDF_parser(file_path: Any) -> list[Any]:
+async def PDF_parser(file_path: Path) -> list[Any]:
     
     """
     Takes the file path and parse it using PDFloader, then store content of all pages in the list 'pages'.
@@ -24,7 +25,7 @@ async def PDF_parser(file_path: Any) -> list[Any]:
     try:
         async for page in loader.alazy_load():
             pages.append(page)
-            return pages
+        return pages
     except Exception as e:
         raise RuntimeError(f'PDF could not parsed as error occurred {e}') from e
 

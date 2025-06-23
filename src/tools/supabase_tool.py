@@ -20,7 +20,7 @@ from typing import List, Tuple, Optional, Dict, Any
 
 class database_queries():
     openai_embeddings = OpenAIEmbeddings()
-    supabase_client_activated = supabase_client(asyncronous_supabase=True)
+    supabase_client_activated =  supabase_client(asyncronous_supabase=True)
     vector_store = None
     documents: list[Any] = None
     no_of_doc_to_retrieve: int = 1
@@ -29,14 +29,14 @@ class database_queries():
     # We cannot await client at class level so, we have to do it within async initializer
     async def async_init(self):
         # Await the async supabase client correctly
-        self.supabase_client_activated = await supabase_client(asyncronous_supabase=True)
+       self.supabase_client_activated = await supabase_client(asyncronous_supabase=True)
 
 
     async def initialize_vector_store(self):
         try:
             if self.documents:  # If file was uploaded and questions are asked about it.
                 # Let's store the chunks in DB
-                self.vector_store = SupabaseVectorStore.from_documents(  # Use custom class
+                self.vector_store = await SupabaseVectorStore.from_documents(  # Use custom class
                     documents=self.documents,
                     embedding=self.openai_embeddings,
                     client= self.supabase_client_activated,
@@ -44,7 +44,7 @@ class database_queries():
                 )
             
             elif not self.vector_store:  # When file was not provided
-                self.vector_store = SupabaseVectorStore(  # Use custom class
+                self.vector_store = await SupabaseVectorStore(  
                     embedding=self.openai_embeddings,
                     client= self.supabase_client_activated,
                     table_name='documents'
@@ -55,7 +55,7 @@ class database_queries():
 
 
     # Lets create a function for data retrieval 
-    async def vector_embeddings_storage( self,doc_objects: list = None):
+    async def vector_embeddings_storage( self,doc_objects: list[Document] = None):
         """
         It takes the document objects created by PDF Parser to split into chunks then creates embeddings & store it in Supabase database. 
 
