@@ -73,8 +73,9 @@ async def vector_storage_supabaseDB(state:Keywordstate):
     try:
         # lets get the tool function from the supabasetool file 
         DB_methods = database_queries()
+        await DB_methods.async_init()
 
-        # lets define the behavior of the node
+        # lets define the behavior of the node 
         data_storage: Data_storage_schema = await DB_methods.vector_embeddings_storage(doc_objects)
 
         # lets extract the output from the object creared based on the schema
@@ -84,7 +85,7 @@ async def vector_storage_supabaseDB(state:Keywordstate):
         return {"Vector_storage_status": Vector_storage_status}, print("data stored successfully!")
     
     except Exception as e:
-        raise (f"error occured due to {e}") from e
+        raise e
 
 
 

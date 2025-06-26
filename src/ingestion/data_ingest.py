@@ -33,8 +33,8 @@ async def PDF_parser(file_path: Path) -> list[Any]:
             #document_page_content = [ {'meta_data' : doc.metadata} for doc in pages]
     #return document_page_content
 
-#if __name__ == '__main__':
-#    file_address = 'src/ingestion/LangGraph.pdf'
-#    results = asyncio.run(PDF_parser(file_path=file_address))
-#    print(results)
+if __name__ == '__main__':
+    file_address = 'src/ingestion/LangGraph.pdf'
+    results = asyncio.run(PDF_parser(file_path=file_address))
+    print(results)
 

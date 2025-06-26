@@ -20,7 +20,7 @@ from typing import List, Tuple, Optional, Dict, Any
 
 class database_queries():
     openai_embeddings = OpenAIEmbeddings()
-    supabase_client_activated =  supabase_client(asyncronous_supabase=True)
+    #supabase_client_activated =  supabase_client(asyncronous_supabase=True)
     vector_store = None
     documents: list[Any] = None
     no_of_doc_to_retrieve: int = 1
@@ -29,24 +29,27 @@ class database_queries():
     # We cannot await client at class level so, we have to do it within async initializer
     async def async_init(self):
         # Await the async supabase client correctly
-       self.supabase_client_activated = await supabase_client(asyncronous_supabase=True)
+       self.supabase_client_activated =  supabase_client(asyncronous_supabase=False)
 
 
     async def initialize_vector_store(self):
+
+        supabase_client_init =  self.supabase_client_activated
+
         try:
             if self.documents:  # If file was uploaded and questions are asked about it.
                 # Let's store the chunks in DB
-                self.vector_store = await SupabaseVectorStore.from_documents(  # Use custom class
+                self.vector_store =  SupabaseVectorStore.from_documents(  # Use custom class
                     documents=self.documents,
                     embedding=self.openai_embeddings,
-                    client= self.supabase_client_activated,
+                    client= supabase_client_init,
                     table_name='documents'
                 )
             
             elif not self.vector_store:  # When file was not provided
-                self.vector_store = await SupabaseVectorStore(  
+                self.vector_store =  SupabaseVectorStore(  
                     embedding=self.openai_embeddings,
-                    client= self.supabase_client_activated,
+                    client= supabase_client_init,
                     table_name='documents'
                 )
 
@@ -72,7 +75,7 @@ class database_queries():
         try: 
             # Lets create chunks of the list of objects created by PDFParser
             text_splitter = RecursiveCharacterTextSplitter(chunk_size = 100, chunk_overlap = 20)
-            chunks = text_splitter.split_documents(doc_objects)
+            chunks =  text_splitter.split_documents(doc_objects)
             self.documents = chunks
 
             # Initialize vectorstore to store data in Supabase database
@@ -111,7 +114,7 @@ class database_queries():
             # Now we need to call the rpc (stored procedure created in the Supabase) that will receive the query embeddings
             # as input and executes vector similarity search for it and then returns the output
 
-            rpc_response = await supabase_client.rpc("similarity_search_fn", {
+            rpc_response =  supabase_client.rpc("similarity_search_fn", {
                 "query_vectors": query_embeddings,
                 "k": self.no_of_doc_to_retrieve
             }).execute()
@@ -122,7 +125,6 @@ class database_queries():
         except Exception as e:
             raise RuntimeError(f'data could not retrieved due to error {e}') from e
 
-
 #async def main():
 
 #    db = database_queries()
@@ -131,8 +133,8 @@ class database_queries():
         # Example: Store documents
 #    file_address = 'src/ingestion/LangGraph.pdf'
 
-    #doc_objects = await PDF_parser(file_path=file_address) # Your document objects
-    #await db.vector_embeddings_storage()
+#    doc_objects = await PDF_parser(file_path=file_address) # Your document objects
+#    await db.vector_embeddings_storage(doc_objects)
         
         # Example: Retrieve data
 #    results = await db.vector_data_retrieval("What are spellings of AI?")
@@ -140,5 +142,3 @@ class database_queries():
 
 #if __name__ == "__main__":
 #   asyncio.run(main())
-
-
