@@ -68,7 +68,7 @@ async def vector_storage_supabaseDB(state:Keywordstate):
     doc_objects: list[Document] = state["document_objects"]
 
     # lets define the output variable 
-    Vector_storage_status: str = None
+    Vector_storage_status: str = None 
 
     try:
         # lets get the tool function from the supabasetool file 
@@ -76,13 +76,17 @@ async def vector_storage_supabaseDB(state:Keywordstate):
         await DB_methods.async_init()
 
         # lets define the behavior of the node 
-        data_storage: Data_storage_schema = await DB_methods.vector_embeddings_storage(doc_objects)
+        data_storage = await DB_methods.vector_embeddings_storage(doc_objects)
 
         # lets extract the output from the object creared based on the schema
-        Vector_storage_status = data_storage.data_storage_status
+        if data_storage:
+
+            Vector_storage_status = 'Vectors stored successfully'
+
+        print(Vector_storage_status)
 
         # lets update the state
-        return {"Vector_storage_status": Vector_storage_status}, print("data stored successfully!")
+        return {"Vector_storage_status": Vector_storage_status}
     
     except Exception as e:
         raise e
@@ -110,6 +114,7 @@ workflow = builder.compile()
 # User input & invoke the graph
 user_input_for_entry_node = {"user_query": "what are AI Agents?", "user_doc": "C:\\AI Research Assistant Code\\src\\ingestion\\LangGraph.pdf"}
 asyncio.run(workflow.ainvoke(user_input_for_entry_node))
+print()
 
 # lets get the picture of the graph
 #display(Image(workflow.get_graph().draw_mermaid_png()))
