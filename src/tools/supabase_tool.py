@@ -28,7 +28,7 @@ class database_queries():
 
     # We cannot await client at class level so, we have to do it within async initializer
     async def async_init(self):
-        # Await the async supabase client correctly
+        
        self.supabase_client_activated =  supabase_client(asyncronous_supabase=False)
 
 
