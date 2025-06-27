@@ -2,6 +2,9 @@
 import asyncio
 from langgraph.graph import StateGraph
 from IPython.display import Image, display
+import opik
+opik.configure(use_local=False)
+from opik.integrations.langchain import OpikTracer
 
 from src.agents.research_assistant.state import Keywordstate
 from pathlib import Path
@@ -73,7 +76,7 @@ async def vector_storage_supabaseDB(state:Keywordstate):
     try:
         # lets get the tool function from the supabasetool file 
         DB_methods = database_queries()
-        await DB_methods.async_init()
+        await DB_methods.async_init()  # Initializing the attributes of class.
 
         # lets define the behavior of the node 
         data_storage = await DB_methods.vector_embeddings_storage(doc_objects)
@@ -112,9 +115,16 @@ builder.set_entry_point("user_pdf_parsed")
 workflow = builder.compile()
 
 # User input & invoke the graph
-user_input_for_entry_node = {"user_query": "what are AI Agents?", "user_doc": "C:\\AI Research Assistant Code\\src\\ingestion\\LangGraph.pdf"}
-asyncio.run(workflow.ainvoke(user_input_for_entry_node))
-print()
+#user_input_for_entry_node = {"user_query": "what are AI Agents?", "user_doc": "C:\\AI Research Assistant Code\\src\\ingestion\\LangGraph.pdf"}
+#asyncio.run(workflow.ainvoke(user_input_for_entry_node))
+#print()
+
+# Lets call the graph with Opik 
+tracer = OpikTracer(graph=workflow.get_graph(xray=True))
+inputs = {"user_query": "what are AI Agents?", "user_doc": "C:\\AI Research Assistant Code\\src\\ingestion\\LangGraph.pdf"}
+result = asyncio.run(workflow.ainvoke(inputs,config={"callbacks": [tracer]}))
+print(result)
+
 
 # lets get the picture of the graph
 #display(Image(workflow.get_graph().draw_mermaid_png()))
