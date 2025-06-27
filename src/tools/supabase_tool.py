@@ -81,7 +81,7 @@ class database_queries():
             # Initialize vectorstore to store data in Supabase database
             await self.initialize_vector_store()
 
-            return print("vector_storage: successfully stored!")  # Never end function silently - Here we do not need to show output but still we have to return something to see if code gets executed successfully or not.
+            return True  # Never end function silently - Here we do not need to show output but still we have to return something to see if code gets executed successfully or not.
 
         except Exception as e:
             raise RuntimeError(f'Vector embeddings could not store due to error {e}') from e 

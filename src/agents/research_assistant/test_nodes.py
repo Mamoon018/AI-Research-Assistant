@@ -99,6 +99,8 @@ async def vector_storage_supabaseDB(state:Keywordstate):
 
 
 
+
+
 # Lets test these two nodes first then we will proceed towards the router node
 # Define the state of graph
 builder = StateGraph(Keywordstate)
