@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, Field
 from langchain.schema import Document
+from typing import Literal
 
 
 class BasestructureModel(BaseModel):
@@ -12,9 +13,19 @@ class BasestructureModel(BaseModel):
 
 # Node - 1 Schema
 class PDF_Parser_schema(BasestructureModel):
-    pdf_parser_results: list[Document]
+    pdf_parser_results: list[Document] = Field(
+        ..., "It stores the document objects of the file uploaded",
+    )
 
 # Node - 2 Schema
 class Data_storage_schema(BasestructureModel):
-    data_storage_status: str
+    data_storage_status: str = Field(
+        ..., "It is the status that will confirm if data storage in the database has been executed successfully or not",
+    )
+
+# Node - 3 Schema
+class Router_node_schema(BasestructureModel):
+    router_decision: Literal["DB and LLM", "Web and LLM"] = Field(
+        ..., "It can only give two possible output based on which LLM will decide which node needs to be executed moving forward" ,
+    )
 

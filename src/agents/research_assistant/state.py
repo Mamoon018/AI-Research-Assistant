@@ -22,7 +22,7 @@ class Keywordstate(MessagesState):
     Vector_storage_status: str
 
     # Output of node-3: It is the output of the router node. It will decide which node needs to be executed from here.
-    Router_decision: Literal["DB and LLM", "Web and LLM"]
+    router_decision: Literal["DB and LLM", "Web and LLM"]
 
     # Output of node - (4-A) : Retrieved_data contains the list of chunks with page-content & metadata.
     Retrieved_data: list[Document]
