@@ -94,6 +94,46 @@ async def vector_storage_supabaseDB(state:Keywordstate):
     except Exception as e:
         raise e
 
+async def router_node(state:Keywordstate):
+
+    """
+    It takes the doc_objects as an input and extract the content of all objects. Then that object passes to the LLM
+    that ckecks if information exist in the content or not based on the user query.
+
+    **Args:**
+    user_query (str): It is the user query stored in the state. It is the question that needs to be answers.
+    user_doc (list[Document]): It is the document objects containing meta_data and page_content
+
+    **Returns:**
+    router_decision (Literal["DB and LLM", "Web and LLM"]): It returns the name of the type of node (After router we have 3 different nodes) that router needs to initiate as a result of decision
+
+    **Raises:**
+    It raises error if LLM does not get initiated!
+    
+    """
+
+    """
+    1) Input data
+    2) Prompt of LLM
+    3) Schema of LLM
+    4) Initialize the OUTPUT object 
+    5) initialize the model with fallacks binded by tools while assigning schema
+    6) fetch the data from the schema object and store in the output object initialized earlier
+    7) make changes if required. 
+    8) update the state
+    
+    """
+
+    # lets get the input objects from the state
+    document_objects: list[Document] = state["document_objects"]
+    user_query: str = state["user_query"]
+
+    # lets get the prompt for the node
+    router_prompt: str = 
+
+
+
+
 
 
 

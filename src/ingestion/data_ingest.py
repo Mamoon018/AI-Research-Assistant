@@ -25,6 +25,9 @@ async def PDF_parser(file_path: Path) -> list[Any]:
     try:
         async for page in loader.alazy_load():
             pages.append(page)
+
+        for doc in pages:
+            doc.page_content =  doc.page_content.replace('\n', '')
         return pages
     except Exception as e:
         raise RuntimeError(f'PDF could not parsed as error occurred {e}') from e
@@ -33,8 +36,8 @@ async def PDF_parser(file_path: Path) -> list[Any]:
             #document_page_content = [ {'meta_data' : doc.metadata} for doc in pages]
     #return document_page_content
 
-#if __name__ == '__main__':
-#    file_address = 'src/ingestion/LangGraph.pdf'
-#    results = asyncio.run(PDF_parser(file_path=file_address))
-#    print(results)
+if __name__ == '__main__':
+    file_address = 'src/ingestion/LangGraph.pdf'
+    results = asyncio.run(PDF_parser(file_path=file_address))
+    print(results)
 

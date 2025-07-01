@@ -74,6 +74,7 @@ class database_queries():
 
         try: 
             # Lets create chunks of the list of objects created by PDFParser
+            
             text_splitter = RecursiveCharacterTextSplitter(chunk_size = 100, chunk_overlap = 20)
             chunks =  text_splitter.split_documents(doc_objects)
             self.documents = chunks
