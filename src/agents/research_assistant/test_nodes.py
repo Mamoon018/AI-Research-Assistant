@@ -5,6 +5,9 @@ from IPython.display import Image, display
 import opik
 opik.configure(use_local=False)
 from opik.integrations.langchain import OpikTracer
+from langchain_core.prompts import PromptTemplate
+from langchain_core.messages import HumanMessage
+from typing import Any
 
 from src.agents.research_assistant.state import Keywordstate
 from pathlib import Path
@@ -12,7 +15,26 @@ from langchain.schema import Document
 from src.ingestion.data_ingest import PDF_parser
 from src.tools.supabase_tool import database_queries
 
-from src.agents.research_assistant.schemas import PDF_Parser_schema, Data_storage_schema
+from src.agents.research_assistant.schemas import PDF_Parser_schema, Data_storage_schema, Router_node_schema
+from src.agents.research_assistant.prompts import ROUTER_NODE_PROMPT
+from src.utils.model_initializer import INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS
+from src.utils.model_initializer import get_openai_llm, get_gemini_llm, get_groq_llm
+
+### Lets define the Models for nodes here ###
+
+MODEL_WITH_FALLBACK_ROUTER = INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
+    primary_model_fn= get_openai_llm,
+    primary_model_fn_kwargs= {"model_num": 1, "temperature" :0.5},
+    fallback_model_fn= get_openai_llm,
+    fallback_fn_kwargs= [{"model_num" :1}, {"temperature" :0.5}],
+    bind_tool_list= [],
+    structured_output= Router_node_schema
+)
+
+
+
+
+
 
 
 # Lets create the first node for the graph - PDF Parser Node
@@ -35,6 +57,9 @@ async def user_pdf_parsed(state:Keywordstate):
     # lets intialize the list to store parsed document objects
     parsed_pdf_doc_objects: list[Document] = []
 
+    # lets initialize the list for storing page content of each doc object
+    extracted_page_contents: list[Any] = []
+
     try:
         # lets intialize the tool 
         pdf_parser_results: PDF_Parser_schema = await PDF_parser(user_uploaded_document)
@@ -42,12 +67,17 @@ async def user_pdf_parsed(state:Keywordstate):
         # lets extract the variable from the object created based on the schema 
         parsed_pdf_doc_objects = pdf_parser_results
 
+        # Lets extract the page_content from the doc_objects stored in list
+        for doc in parsed_pdf_doc_objects:
+            extracted_page_contents.append(doc.page_content)
+
         # lets update the state and print the results
 
-        return {"document_objects": parsed_pdf_doc_objects}
+        return {"document_objects": parsed_pdf_doc_objects,
+                "extracted_page_contents": extracted_page_contents}
 
     except Exception as e:
-        raise print(f'Error occured {e}') from e
+        raise RuntimeError(f'Error occured {e}') from e
 
 
 # Lets create the 2nd node for the graph - Data Storage Node
@@ -127,14 +157,37 @@ async def router_node(state:Keywordstate):
     # lets get the input objects from the state
     document_objects: list[Document] = state["document_objects"]
     user_query: str = state["user_query"]
+    page_contents: list[Any] = state["extracted_page_contents"]
 
     # lets get the prompt for the node
-    router_prompt: str = 
+    router_prompt = PromptTemplate(
+        input_variables= ["user_question", "content_of_doc_objects"] ,
+        template= ROUTER_NODE_PROMPT
+    )
+
+    final_router_prompt = router_prompt.format(user_question = user_query, content_of_doc_objects = page_contents)
 
 
+    # lets initialize the object to store the decision of router
+    router_decision: str = None
 
+    # lets initialize the object to store the reasoning of llm behind choosing category for user query
+    router_reasoning: str 
 
+    try:
+        router_output: Router_node_schema = await MODEL_WITH_FALLBACK_ROUTER.ainvoke([HumanMessage(content= final_router_prompt)])
 
+        # lets extract the output of the llm
+        router_decision: str = router_output.router_call
+        router_reasoning: str = router_output.router_reasoning_data
+
+        # lets update the state in return part
+        return {
+            "router_decision": router_decision,
+            "router_reasoning": router_reasoning
+        }
+    except Exception as e:
+        raise RuntimeError(f'error occurred due {e}') from e 
 
 
 
@@ -148,9 +201,11 @@ builder = StateGraph(Keywordstate)
 # Add nodes
 builder.add_node("user_pdf_parsed", user_pdf_parsed)
 builder.add_node("vector_storage_supabaseDB", vector_storage_supabaseDB)
+builder.add_node("router_decision_node", router_node)
 
 # Add edges to connect the nodes
 builder.add_edge("user_pdf_parsed", "vector_storage_supabaseDB")
+builder.add_edge("vector_storage_supabaseDB", "router_decision_node")
 builder.set_entry_point("user_pdf_parsed")
 
 # compile the graph
@@ -165,7 +220,7 @@ workflow = builder.compile()
 tracer = OpikTracer(graph=workflow.get_graph(xray=True))
 inputs = {"user_query": "what are AI Agents?", "user_doc": "C:\\AI Research Assistant Code\\src\\ingestion\\LangGraph.pdf"}
 result = asyncio.run(workflow.ainvoke(inputs,config={"callbacks": [tracer]}))
-print(result)
+print(result["router_reasoning"])
 
 
 # lets get the picture of the graph
