@@ -44,7 +44,8 @@ def get_openai_llm(model_num: Literal[1,2] = 1 , temperature: int = 0.5):
             max_completion_tokens= 400,
             timeout= None,
             max_retries= 2,
-            api_key= openai_api_key
+            api_key= openai_api_key,
+            response_format = "json"
         )
     return openai_llm
 
@@ -240,8 +241,8 @@ def supabase_client(asyncronous_supabase: bool = False):
 """
 
 def INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
-        model_fn: Callable[...,Any],
-        model_fn_kwargs: dict,
+        primary_model_fn: Callable[...,Any],
+        primary_model_fn_kwargs: dict,
         fallback_model_fn: Callable[...,Any],
         fallback_fn_kwargs: list[dict],
         bind_tool_list: list[Any],
@@ -249,21 +250,32 @@ def INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
                                                 ):
     
     """
-    1) Takes the defined-llmchatmodels along with some related parameters, and bind tools 
-    to them. And then generate a structured response.
-    2) Create one for primary_model & one for fallback_model.    
+    We need to create function with following features:
+    Because for each node, we have to define the Models separately, we need to keep it as modular as possible to ensure
+    that we can change the nature of Models to be used by changing parameters.
+
+    What are possible changes required:
+    (1) Base Model functions (2) Parameters for Base Model functions (3) Fallback Model functions (4) Parameters for Fallback Model functions
+    (5) Tools to be binded (6) Structured Output schema
+
+    End goal:
+    While ensuring the flexibility, we need to come up with final LLM object that will be invoked in the node by assigning
+    Prompt to it.  
     
     """
 
-    primary_llm_fn = model_fn(**model_fn_kwargs)
+    primary_llm_fn = primary_model_fn(**primary_model_fn_kwargs)
 
     # lets bind tools to llm function
-    llm_fn_bind_tools = primary_llm_fn.bind_tools(bind_tool_list)
+    primary_llm_fn_bind_tools = primary_llm_fn.bind_tools(bind_tool_list)
 
     # lets get the final output of the llm_fn_bind_tools in structured form
-    llm_fn_bind_tools_struc_output = llm_fn_bind_tools.with_strcutured_output(structured_output)
+    primary_llm_fn_bind_tools_struc_output = primary_llm_fn_bind_tools.with_structured_output(structured_output)
 
     # lets get the fallbackmodel
+    """
+    Because we can specify multiple models in fallback so, we will get the list of models & parameters for it.
+    """
     models, params = fallback_fn_kwargs
     fallback_llm_fn = fallback_model_fn(**models, **params)
 
@@ -272,5 +284,13 @@ def INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
 
     # structure the final output 
     fallback_llm_fn_bind_tools_struc_output = fallback_llm_fn_bind_tools.with_structured_output(structured_output)
+
+    # lets get the combination of primary-llm and fallback-llm 
+
+    return primary_llm_fn_bind_tools_struc_output.with_fallbacks([fallback_llm_fn_bind_tools_struc_output])
+
+
+
+
 
     

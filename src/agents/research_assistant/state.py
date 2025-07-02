@@ -16,13 +16,15 @@ class Keywordstate(MessagesState):
     user_doc: Path 
 
     # Output of node-1: It contains the list of page-wise document objects containing page-content & metadata. For example: Documents: [Document(page_content="Text from page 1", metadata={"page": 1})]
-    document_objects: list[Document]
+    document_objects: list[Document] | None 
+    extracted_page_contents: list[Any] 
 
     # Output of node-2: It contains the status of the vector embeddings storage. Goal is to keep record if vectors were stored successfully or not.
     Vector_storage_status: str
 
     # Output of node-3: It is the output of the router node. It will decide which node needs to be executed from here.
     router_decision: Literal["DB and LLM", "Web and LLM"]
+    router_reasoning: str
 
     # Output of node - (4-A) : Retrieved_data contains the list of chunks with page-content & metadata.
     Retrieved_data: list[Document]
