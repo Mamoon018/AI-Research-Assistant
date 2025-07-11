@@ -1,8 +1,15 @@
-**AI Research Assistant:** A modular, production-ready framework designed to streamline research workflows using advanced LLMs, vector databases, and web search integrations. 
+**AI Research Assistant:** A modular, production-ready framework designed to streamline research workflows using advanced 
+1) LLMs
+2) vector databases
+3)  web search integrations. 
 
 **Overview**
-AI Research Assistant Code leverages state-of-the-art language models (OpenAI, Gemini, Groq, Mistral) and robust retrieval-augmented generation 
-(RAG) pipelines. It enables users to parse, store, and query documents with high accuracy and efficiency, making it ideal for both research 
+AI Research Assistant Code leverages state-of-the-art language models (OpenAI, Gemini, Groq, Mistral) and **robust retrieval-augmented generation 
+(RAG) pipelines**. 
+It includes following process: 
+1) parse content
+2) store embeddings
+3) Query documents with high accuracy and efficiency, making it ideal for both research 
 and industry applications. 
 
 **Architecture & Key Components Agent-Based Orchestration:** Built on LangGraph, the framework uses a flexible agent-based architecture for dynamic 
