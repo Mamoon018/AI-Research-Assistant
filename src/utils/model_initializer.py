@@ -257,6 +257,7 @@ def INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
     What are possible changes required:
     (1) Base Model functions (2) Parameters for Base Model functions (3) Fallback Model functions (4) Parameters for Fallback Model functions
     (5) Tools to be binded (6) Structured Output schema
+    --> We will create function that will provide us flexibility to changes these things everytime we need to define model.
 
     End goal:
     While ensuring the flexibility, we need to come up with final LLM object that will be invoked in the node by assigning
@@ -274,7 +275,7 @@ def INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
 
     # lets get the fallbackmodel
     """
-    Because we can specify multiple models in fallback so, we will get the list of models & parameters for it.
+    Because we can specify multiple models in fallback so, we will get the list of models & for them list of parameters.
     """
     models, params = fallback_fn_kwargs
     fallback_llm_fn = fallback_model_fn(**models, **params)

@@ -40,3 +40,5 @@ if __name__ == '__main__':
     results = asyncio.run(PDF_parser(file_path=file_address))
     print(results)
 
+## Sample final output ##
+# [Document(meta={'producer': 'ass'}, page_content=' ')] 

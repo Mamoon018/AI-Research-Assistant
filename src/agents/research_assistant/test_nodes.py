@@ -16,12 +16,13 @@ from src.ingestion.data_ingest import PDF_parser
 from src.tools.supabase_tool import database_queries
 
 from src.agents.research_assistant.schemas import PDF_Parser_schema, Data_storage_schema, Router_node_schema
-from src.agents.research_assistant.prompts import ROUTER_NODE_PROMPT
+from src.agents.research_assistant.prompts import ROUTER_NODE_PROMPT, DB_AND_LLM_NODE_PROMPT
 from src.utils.model_initializer import INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS
 from src.utils.model_initializer import get_openai_llm, get_gemini_llm, get_groq_llm
 
 ### Lets define the Models for nodes here ###
 
+##### 'MODEL FOR ROUTER NODE' #####
 MODEL_WITH_FALLBACK_ROUTER = INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
     primary_model_fn= get_openai_llm,
     primary_model_fn_kwargs= {"model_num": 1, "temperature" :0.5},
@@ -64,7 +65,7 @@ async def user_pdf_parsed(state:Keywordstate):
         # lets intialize the tool 
         pdf_parser_results: PDF_Parser_schema = await PDF_parser(user_uploaded_document)
 
-        # lets extract the variable from the object created based on the schema 
+        # lets extract the variable from the object created based on the schema  (No class instance, as we did not use LLM)
         parsed_pdf_doc_objects = pdf_parser_results
 
         # Lets extract the page_content from the doc_objects stored in list
@@ -124,6 +125,7 @@ async def vector_storage_supabaseDB(state:Keywordstate):
     except Exception as e:
         raise e
 
+# Lets add router node to decide if uer query needs to go to "Web and LLM" or "DB and LLM" next.
 async def router_node(state:Keywordstate):
 
     """
@@ -161,7 +163,7 @@ async def router_node(state:Keywordstate):
 
     # lets get the prompt for the node
     router_prompt = PromptTemplate(
-        input_variables= ["user_question", "content_of_doc_objects"] ,
+        input_variables= ["user_question", "content_of_doc_objects"],
         template= ROUTER_NODE_PROMPT
     )
 
@@ -188,6 +190,47 @@ async def router_node(state:Keywordstate):
         }
     except Exception as e:
         raise RuntimeError(f'error occurred due {e}') from e 
+
+
+# Lets add DB and LLM node 
+
+async def DB_and_LLM_node(state:Keywordstate):
+
+    """
+    If router decision comes out to be "DB and LLM" then this node will be initiated to take user query and search
+    for its relevant information in the Supabase Database. 
+    
+    **Args:**
+    user_query (str): It is the query of the user that will be searched in the database.
+    
+    **Returns:**
+    retrieved_data (list[Document]): It is the object that will contain the retrieved document objects from the Supabase database.
+    LLM_analysis_on_retrieved_data (str): It is the analysis of LLM to answer user query based on the retrieved data to ensure user get detailed answer.
+
+    **Raises:**
+    It raises the error if retrieval function is unable to retrieve data.
+
+    """
+
+    # lets get the input variables required for the node
+    user_question: str = state["user_query"]
+
+    # lets get the prompt of the node
+    DB_and_LLM_prompt = PromptTemplate(input_variables=["user_question"],
+                                       template= DB_AND_LLM_NODE_PROMPT)
+    
+    final_DB_and_LLM_prompt = DB_and_LLM_prompt.format(user_question = user_question)
+
+    # lets initialize the variables to store the output of the node 
+    retrieved_data_by_LLM: list[Document]
+    LLM_analysis_on_retrieved_data_by_LLM: str 
+
+    # lets initialize the model
+
+    DB_LLM_response: 
+
+
+
 
 
 

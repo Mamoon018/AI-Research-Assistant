@@ -23,7 +23,7 @@ class database_queries():
     #supabase_client_activated =  supabase_client(asyncronous_supabase=True)
     vector_store = None
     documents: list[Any] = None
-    no_of_doc_to_retrieve: int = 1
+    no_of_doc_to_retrieve: int = 3
 
 
     # We cannot await client at class level so, we have to do it within async initializer
@@ -75,7 +75,7 @@ class database_queries():
         try: 
             # Lets create chunks of the list of objects created by PDFParser
             
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size = 100, chunk_overlap = 20)
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size = 300, chunk_overlap = 40)
             chunks =  text_splitter.split_documents(doc_objects)
             self.documents = chunks
 
@@ -123,6 +123,23 @@ class database_queries():
             }).execute()
             # .execute send our request to Supabase
 
+            # lets clean the data retrieved by the retrieval tool
+            """
+            1) Access the content stored in the list of dictionary
+            2) Using for loop and Extend - add content of all chunks in a list
+            3) tool will return list containing contents of all chunks
+            
+            """
+            # lets filter out only dictionaries that contain content
+
+
+            # Lets initialize the list to store contents
+            content_of_retrieved_chunks: list[Any] = []
+
+            # lets extract the content and store in the list
+            for retrieved_chunk in rpc_response:
+                retrieved_chunk
+
             return rpc_response
 
         except Exception as e:
@@ -145,3 +162,5 @@ class database_queries():
 
 #if __name__ == "__main__":
 #   asyncio.run(main())
+
+
