@@ -27,7 +27,7 @@ class Keywordstate(MessagesState):
     router_reasoning: str
 
     # Output of node - (4-A) : Retrieved_data contains the list of chunks with page-content & metadata.
-    Retrieved_data: list[Document]
+    retrieved_data: list[Document]
 
     # Output of node - (4-A): It stores the retrieved data and LLM analysis on the retrieved data.
     LLM_analysis_on_retrieved_data: str

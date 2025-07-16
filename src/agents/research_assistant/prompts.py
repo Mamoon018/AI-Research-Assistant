@@ -27,3 +27,20 @@ Here is the user_query:
 {user_question}
 
 """
+
+
+DB_AND_LLM_NODE_PROMPT: str = """
+
+You are a research assistant that will answer user queries. You will be provided with the user_query and you 
+will retrieve the relevant data from supabase database using vector_data_retrieval tool. After initializing the
+tool that will contain the page_content of the retrieved document objects. you will analyze it and use it to 
+generate final response for the user.
+
+you need to consider following points for generating the response:
+1) Make sure you call the tool to retrieve data from the database using vector_data_retrieval tool.
+2) Consider the output of the tool to generate final answer for user query
+
+Here is the user_query:
+{user_question}
+
+"""

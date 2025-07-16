@@ -32,3 +32,11 @@ class Router_node_schema(BasestructureModel):
     router_reasoning_data: str  = Field(
         ..., description = "It stores the reason of the decision why LLM choose one of two options for categorization of user query"
     )
+
+# Node - 4 Schema
+class DB_and_LLM_schema(BasestructureModel):
+    query_related_retrieved_data: str = Field(
+        ..., description= "It contains the page_content of the "
+    )
+
+    query_related_retrieved_content: list[Document]
