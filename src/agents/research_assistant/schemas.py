@@ -36,7 +36,19 @@ class Router_node_schema(BasestructureModel):
 # Node - 4 Schema
 class DB_and_LLM_schema(BasestructureModel):
     query_related_retrieved_data: str = Field(
-        ..., description= "It contains the page_content of the "
+        ..., description= "It contains the page_content of the retrived document objects"
     )
 
-    query_related_retrieved_content: list[Document]
+    LLM_analysis_on_rerteived_data: str = Field(
+        ..., description= "It contains LLM final output based on the retrived data from the database"
+    )
+
+# Node - 5 Schema
+class WEB_AND_LLM_SCHEMA(BasestructureModel):
+    query_related_info_from_webseaerch: str = Field(
+        ..., "it contains the retrieved info from web search tool"
+    )
+
+    LLM_analysis_on_rerteived_websearch_info: str =  Field(
+        ..., "It contains the final output of the LLM for the user query based on the web search results"
+    )
