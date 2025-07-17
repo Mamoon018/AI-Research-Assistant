@@ -14,9 +14,10 @@ from pathlib import Path
 from langchain.schema import Document
 from src.ingestion.data_ingest import PDF_parser
 from src.tools.supabase_tool import database_queries
+from langgraph.graph import END
 
-from src.agents.research_assistant.schemas import PDF_Parser_schema, Data_storage_schema, Router_node_schema
-from src.agents.research_assistant.prompts import ROUTER_NODE_PROMPT, DB_AND_LLM_NODE_PROMPT
+from src.agents.research_assistant.schemas import PDF_Parser_schema, Data_storage_schema, Router_node_schema, DB_and_LLM_schema, WEB_AND_LLM_SCHEMA
+from src.agents.research_assistant.prompts import ROUTER_NODE_PROMPT, DB_AND_LLM_NODE_PROMPT, WEB_AND_LLM_NODE_PROMPT
 from src.utils.model_initializer import INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS
 from src.utils.model_initializer import get_openai_llm, get_gemini_llm, get_groq_llm
 
@@ -25,15 +26,23 @@ from src.utils.model_initializer import get_openai_llm, get_gemini_llm, get_groq
 ##### 'MODEL FOR ROUTER NODE' #####
 MODEL_WITH_FALLBACK_ROUTER = INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
     primary_model_fn= get_openai_llm,
+    primary_model_fn_kwargs= {"model_num": 2, "temperature" :0.5},
+    fallback_model_fn= get_openai_llm,
+    fallback_fn_kwargs= [{"model_num" :2}, {"temperature" :0.5}],
+    bind_tool_list= [],
+    structured_output= Router_node_schema
+)
+
+
+##### 'MODEL FOR DB AND LLM NODE' #####
+MODEL_WITH_FALLBACK_DB_AND_LLM = INITIALIZING_MODELS_STRUCTUREDOUTPUT_TOOLS(
+    primary_model_fn= get_openai_llm,
     primary_model_fn_kwargs= {"model_num": 1, "temperature" :0.5},
     fallback_model_fn= get_openai_llm,
     fallback_fn_kwargs= [{"model_num" :1}, {"temperature" :0.5}],
     bind_tool_list= [],
     structured_output= Router_node_schema
 )
-
-
-
 
 
 
@@ -174,7 +183,7 @@ async def router_node(state:Keywordstate):
     router_decision: str = None
 
     # lets initialize the object to store the reasoning of llm behind choosing category for user query
-    router_reasoning: str 
+    router_reasoning: str = None
 
     try:
         router_output: Router_node_schema = await MODEL_WITH_FALLBACK_ROUTER.ainvoke([HumanMessage(content= final_router_prompt)])
@@ -223,18 +232,83 @@ async def DB_and_LLM_node(state:Keywordstate):
 
     # lets initialize the variables to store the output of the node 
     retrieved_data_by_LLM: list[Document]
-    LLM_analysis_on_retrieved_data_by_LLM: str 
-
-    # lets initialize the model
-
-    DB_LLM_response: 
+    LLM_analysis_on_retrieved_data_by_LLM: str = None 
 
 
+    try: 
+        # lets initialize the model
+        DB_LLM_response: DB_and_LLM_schema = MODEL_WITH_FALLBACK_DB_AND_LLM.ainvoke([HumanMessage(content= final_DB_and_LLM_prompt)])
+
+        # lets retrieve the output and store in the initialized variables
+        retrieved_data_by_LLM = DB_LLM_response.query_related_retrieved_data
+        LLM_analysis_on_retrieved_data_by_LLM = DB_LLM_response.LLM_analysis_on_rerteived_data
+
+        # lets update the state
+
+        return {"retrieved_data":retrieved_data_by_LLM,
+                "LLM_analysis_on_retrieved_data":LLM_analysis_on_retrieved_data_by_LLM}
+
+    except Exception as e:
+        raise RuntimeError(f'error occured in DB and LLM Node due to {e}') from e 
 
 
+# Lets add the WEB AND LLM 
+async def WEB_AND_LLM(state:Keywordstate):
+
+    """
+    Lets create the node which will access the web search tool to get the information about the user query. 
+
+    **Args:**
+    user_query (str): It is the question that the user has asked and system needs to answer it.
+
+    **Returns:**
+    LLM_analysis_on_websearch_data (str): It is the response of the LLM based on web search to answer the user query
+    
+    """
+
+    # lets get the variable from the state
+    user_question: str = state["user_query"]
+
+    # lets define the prompt of the node
+    WEB_AND_LLM_PROMPT = PromptTemplate(
+        input_variables= ["user_question"],
+        template= WEB_AND_LLM_NODE_PROMPT
+    )
+
+    final_web_and_llm_prompt = WEB_AND_LLM_NODE_PROMPT.format(user_question= user_question)
+
+    # lets initialize the variable to store the output of the LLM
+    web_search_results: str = None 
+    LLM_analysis_on_websearch_data: str = None 
+
+    try:
+
+        # lets initialize the model 
+        web_and_llm_response: WEB_AND_LLM_SCHEMA = MODEL_WITH_FALLBACK_DB_AND_LLM([HumanMessage(content=final_web_and_llm_prompt)])
+
+        # lets store the output in the initialized variable
+        web_search_results = web_and_llm_response.query_related_info_from_webseaerch
+        LLM_analysis_on_websearch_data = web_and_llm_response.LLM_analysis_on_rerteived_websearch_info
+
+        # lets update the state
+
+        return {
+            "web_search_data": web_search_results,
+            "LLM_analysis_on_websearch_data": LLM_analysis_on_websearch_data
+                }
+
+    except Exception as e:
+        raise RuntimeError(f"error occured in WEB AND LLM NODE due to {e}") from e
 
 
+# Lets add router decision node 
 
+async def router_call_node(state:Keywordstate):
+
+    if state["router_decision"] == "DB and LLM":
+        return DB_and_LLM_node
+    if state["router_decision"] == "Web and LLM":
+        return WEB_LLM_node
 
 
 # Lets test these two nodes first then we will proceed towards the router node
@@ -245,10 +319,21 @@ builder = StateGraph(Keywordstate)
 builder.add_node("user_pdf_parsed", user_pdf_parsed)
 builder.add_node("vector_storage_supabaseDB", vector_storage_supabaseDB)
 builder.add_node("router_decision_node", router_node)
+builder.add_node("DB_and_LLM_node", DB_and_LLM_node)
 
 # Add edges to connect the nodes
 builder.add_edge("user_pdf_parsed", "vector_storage_supabaseDB")
 builder.add_edge("vector_storage_supabaseDB", "router_decision_node")
+builder.add_conditional_edges(
+    "router_decision_node",
+    router_call_node,
+    {"DB and LLM": "DB_and_LLM_node",
+     "Web and LLM": "WEB_LLM_node"},
+)
+builder.add_edge("DB_and_LLM_node",END)
+builder.add_edge("WEB_LLM_node",END)
+
+
 builder.set_entry_point("user_pdf_parsed")
 
 # compile the graph

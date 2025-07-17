@@ -35,3 +35,5 @@ class Keywordstate(MessagesState):
     # Output of node - (4-B): It stores the LLM web-tool results plus LLM analysis on those results - in case user query is not related to the document uploaded.
     LLM_analysis_on_websearch_data: str
 
+    web_search_data: str 
+
